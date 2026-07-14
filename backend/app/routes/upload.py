@@ -7,7 +7,6 @@ from app.vector_db import store_chunks
 router = APIRouter()
 
 UPLOAD_DIR = "uploads"
-DB_PATH = "chroma_db"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -19,11 +18,10 @@ def clear_uploads():
 
 def clear_db():
     try:
-        import chromadb
-        client = chromadb.PersistentClient(path="chroma_db")
-        # client.reset()
+        # Vector DB operations handled by vector_db module
+        pass
     except Exception as e:
-        print("DB reset error:", e)
+        print("DB operation error:", e)
 
 def chunk_text(text, chunk_size=500):
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]

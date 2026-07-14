@@ -27,9 +27,6 @@ dist-ssr
 venv/
 .venv/
 
-# Ignore local database states
-chroma_db/
-
 # Ignore any files you uploaded locally for testing
 uploads/*
 !uploads/.gitkeep

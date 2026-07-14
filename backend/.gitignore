@@ -14,8 +14,7 @@ venv/
 # Uploaded files
 uploads/
 
-# Chroma (if old files exist)
-chroma_db/
+
 
 # IDE
 .vscode/

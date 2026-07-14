@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pypdf
+langchain
+sentence-transformers
+python-multipart
+ollama
+pinecone
