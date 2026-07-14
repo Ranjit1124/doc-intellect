@@ -175,4 +175,4 @@ def delete_pdf(file_name):
         filter={
             "file_name": file_name
         }
-    )l
+    )
