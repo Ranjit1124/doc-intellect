@@ -9,8 +9,9 @@ import {
 } from "./Icons";
 
 const PAGE_SIZE = 8;
-const BASE = "https://ranjittommy08-pdfchatbot.hf.space";
+// const BASE = "https://ranjittommy08-pdfchatbot.hf.space";
 // const BASE = "http://127.0.0.1:8000";
+const BASE = "";
 
 export default function FileTable({
   files,
