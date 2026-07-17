@@ -1,6 +1,9 @@
 import { IconSearch } from "./Icons";
 
-export default function Header({ title, subtitle, search, onSearchChange }) {
+export default function Header({ title, subtitle, search, onSearchChange, user }) {
+  const displayName = user?.name || user?.email || "User";
+  const initial = displayName?.trim()?.charAt(0)?.toUpperCase() || "U";
+
   return (
     <header className="top-header">
       <div className="header-left">
@@ -10,7 +13,7 @@ export default function Header({ title, subtitle, search, onSearchChange }) {
         </div>
       </div>
 
-        <div className="header-right">
+      <div className="header-right">
         {/* <div className="header-search">
           <IconSearch />
           <input
@@ -21,8 +24,8 @@ export default function Header({ title, subtitle, search, onSearchChange }) {
           />
         </div>  */}
         <div className="avatar-chip">
-          <div className="avatar">U</div>
-          <span>User</span>
+          <div className="avatar">{initial}</div>
+          <span>{displayName}</span>
         </div>
       </div>
     </header>

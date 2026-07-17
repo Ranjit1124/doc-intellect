@@ -100,6 +100,7 @@ export default function App() {
               ? "Manage and select PDFs for chat"
               : "Ask questions about your selected documents"
           }
+          user={user}
           search={searchQuery}
           onSearchChange={setSearchQuery}
         />

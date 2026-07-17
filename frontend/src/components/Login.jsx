@@ -40,15 +40,20 @@ export default function Login({ onAuth }) {
     try {
       const payload = isSignup ? { email, password, name } : { email, password };
       const res = isSignup ? await signup(payload) : await login(payload);
+      const errorMessage = res?.detail?.message || res?.detail || res?.error || "Auth failed";
       if (res && res.access_token) {
         localStorage.setItem("access_token", res.access_token);
-        onAuth(res.user);
+        onAuth({
+          id: res.user?.id || res.user?.email,
+          email: res.user?.email || payload.email,
+          name: res.user?.name || payload.name || payload.email.split("@", 1)[0],
+        });
       } else {
-        alert(res.detail || "Auth failed");
+        alert(errorMessage);
       }
     } catch (err) {
       console.error(err);
-      alert("Auth error");
+      alert(err?.message || "Auth error");
     }
   };
 
