@@ -1,9 +1,11 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 import os
-from app.pdf import extract_text
+
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+
 from app.embedding import create_embeddings
-from app.vector_db import store_chunks
+from app.pdf import extract_text
 from app.routes.auth import decode_token
+from app.vector_db import store_chunks
 
 router = APIRouter()
 
@@ -28,6 +30,7 @@ def get_current_user(request: Request):
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload.get("sub") or payload.get("email")
 
+
 def clear_uploads(user_id: str):
     user_dir = get_user_upload_dir(user_id)
     for file in os.listdir(user_dir):
@@ -35,35 +38,48 @@ def clear_uploads(user_id: str):
         if os.path.isfile(file_path):
             os.remove(file_path)
 
+
 def clear_db():
     try:
-        # Vector DB operations handled by vector_db module
         pass
-    except Exception as e:
-        print("DB operation error:", e)
+    except Exception as exc:
+        print("DB operation error:", exc)
+
 
 def chunk_text(text, chunk_size=500):
-    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+    return [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+
 
 @router.post("/upload")
 async def upload(request: Request, file: UploadFile = File(...)):
     user_id = get_current_user(request)
     user_dir = get_user_upload_dir(user_id)
-    file_path = os.path.join(user_dir, file.filename)
+
+    original_name = os.path.basename(file.filename or "upload.pdf")
+    safe_name = original_name
+    counter = 1
+    while os.path.exists(os.path.join(user_dir, safe_name)):
+        name, ext = os.path.splitext(original_name)
+        safe_name = f"{name}_{counter}{ext}"
+        counter += 1
+
+    file_path = os.path.join(user_dir, safe_name)
 
     content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
+    with open(file_path, "wb") as handle:
+        handle.write(content)
 
-    text = extract_text(file_path)
-    chunks = chunk_text(text)
-    embeddings = create_embeddings(chunks)
-
-    store_chunks(chunks, embeddings, f"{user_id}/{file.filename}")
+    try:
+        text = extract_text(file_path)
+        chunks = chunk_text(text)
+        embeddings = create_embeddings(chunks)
+        store_chunks(chunks, embeddings, f"{user_id}/{safe_name}")
+    except Exception as exc:
+        print(f"Document indexing failed, but upload was saved: {exc}")
 
     return {
         "message": "uploaded",
-        "file": file.filename,
+        "file": safe_name,
         "user": user_id,
     }
 
