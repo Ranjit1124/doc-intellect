@@ -22,6 +22,7 @@ export default function App() {
   const fileInputRef = useRef(null);
 
   const loadFiles = async () => {
+    if (!user) return;
     try {
       const data = await getFiles();
       setFiles(Array.isArray(data) ? data : []);
@@ -41,12 +42,20 @@ export default function App() {
         } catch (e) {
           console.warn("Auth check failed", e);
           localStorage.removeItem("access_token");
+          setUser(null);
         }
+      } else {
+        setUser(null);
       }
-      loadFiles();
     };
     check();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadFiles();
+    }
+  }, [user]);
 
   const handleUpload = async (pickedFile) => {
     if (!pickedFile || uploading) return;
@@ -101,6 +110,14 @@ export default function App() {
               : "Ask questions about your selected documents"
           }
           user={user}
+          onLogout={() => {
+            localStorage.removeItem("access_token");
+            setUser(null);
+            setFiles([]);
+            setSelectedFiles([]);
+            setChatMessages([]);
+            setChatQuestion("");
+          }}
           search={searchQuery}
           onSearchChange={setSearchQuery}
         />

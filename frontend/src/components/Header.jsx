@@ -1,6 +1,6 @@
 import { IconSearch } from "./Icons";
 
-export default function Header({ title, subtitle, search, onSearchChange, user }) {
+export default function Header({ title, subtitle, search, onSearchChange, user, onLogout }) {
   const displayName = user?.name || user?.email || "User";
   const initial = displayName?.trim()?.charAt(0)?.toUpperCase() || "U";
 
@@ -27,6 +27,9 @@ export default function Header({ title, subtitle, search, onSearchChange, user }
           <div className="avatar">{initial}</div>
           <span>{displayName}</span>
         </div>
+        <button className="btn btn-ghost" type="button" onClick={onLogout}>
+          Logout
+        </button>
       </div>
     </header>
   );

@@ -6,18 +6,31 @@ const BASE = "";
 export const uploadPDF = (file) => {
   const formData = new FormData();
   formData.append("file", file);
+  const token = localStorage.getItem("access_token");
+  const headers = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   return fetch(`${BASE}/upload`, {
     method: "POST",
+    headers,
     body: formData,
   });
 };
 
-export const getFiles = () =>
-  fetch(`${BASE}/files`).then((res) => res.json());
+export const getFiles = () => {
+  const token = localStorage.getItem("access_token");
+  return fetch(`${BASE}/files`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  }).then((res) => res.json());
+};
 
-export const deleteFile = (name) =>
-  fetch(`${BASE}/files/${name}`, { method: "DELETE" });
+export const deleteFile = (name) => {
+  const token = localStorage.getItem("access_token");
+  return fetch(`${BASE}/files/${name}`, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+};
 
 export const chat = async (question, files) => {
   const token = localStorage.getItem("access_token");
