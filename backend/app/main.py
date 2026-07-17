@@ -1,6 +1,6 @@
 print("MAIN.PY START")
 from fastapi import FastAPI
-from app.routes import upload,chat,files
+from app.routes import upload,chat,files,auth
 import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -10,6 +10,7 @@ app=FastAPI()
 app.include_router(upload.router)
 app.include_router(chat.router)
 app.include_router(files.router)
+app.include_router(auth.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

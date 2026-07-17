@@ -6,3 +6,6 @@ sentence-transformers
 python-multipart
 ollama
 pinecone
+passlib[bcrypt]
+python-jose[cryptography]
+requests

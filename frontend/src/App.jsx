@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { getFiles, uploadPDF, deleteFile } from "./api/api";
+import { me } from "./api/api";
 
 import FileTable from "./components/FileTable";
 import ChatBox from "./components/ChatBox";
 import NavSidebar from "./components/NavSidebar";
 import Header from "./components/Header";
 import "./App.css";
+import Login from "./components/Login";
 
 export default function App() {
+  const [user, setUser] = useState(null);
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -29,7 +32,20 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadFiles();
+    const check = async () => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        try {
+          const data = await me();
+          setUser(data);
+        } catch (e) {
+          console.warn("Auth check failed", e);
+          localStorage.removeItem("access_token");
+        }
+      }
+      loadFiles();
+    };
+    check();
   }, []);
 
   const handleUpload = async (pickedFile) => {
@@ -58,6 +74,14 @@ export default function App() {
     setSelectedFiles((prev) => prev.filter((f) => f !== name));
     loadFiles();
   };
+
+  if (!user) {
+    return (
+      <div className="dashboard">
+        <Login onAuth={(u) => setUser(u)} />
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard">
