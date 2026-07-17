@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { getFiles, uploadPDF, deleteFile } from "./api/api";
 import { me } from "./api/api";
+import { useNavigate } from "react-router-dom";
 
 import FileTable from "./components/FileTable";
 import ChatBox from "./components/ChatBox";
 import NavSidebar from "./components/NavSidebar";
 import Header from "./components/Header";
 import "./App.css";
-import Login from "./components/Login";
 
 export default function App() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -35,21 +36,24 @@ export default function App() {
   useEffect(() => {
     const check = async () => {
       const token = localStorage.getItem("access_token");
-      if (token) {
-        try {
-          const data = await me();
-          setUser(data);
-        } catch (e) {
-          console.warn("Auth check failed", e);
-          localStorage.removeItem("access_token");
-          setUser(null);
-        }
-      } else {
+      if (!token) {
         setUser(null);
+        navigate("/");
+        return;
+      }
+
+      try {
+        const data = await me();
+        setUser(data);
+      } catch (e) {
+        console.warn("Auth check failed", e);
+        localStorage.removeItem("access_token");
+        setUser(null);
+        navigate("/");
       }
     };
     check();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (user) {
@@ -85,11 +89,7 @@ export default function App() {
   };
 
   if (!user) {
-    return (
-      <div className="dashboard">
-        <Login onAuth={(u) => setUser(u)} />
-      </div>
-    );
+    return null;
   }
 
   return (

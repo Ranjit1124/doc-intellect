@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { googleCallback, login, signup } from "../api/api";
 
 export default function Login({ onAuth }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -19,8 +21,8 @@ export default function Login({ onAuth }) {
         const res = await googleCallback(code);
         if (res?.access_token) {
           localStorage.setItem("access_token", res.access_token);
-          onAuth(res.user);
-          window.history.replaceState({}, "", "/");
+          if (onAuth) onAuth(res.user);
+          navigate("/app");
         } else {
           alert(res?.detail || "Google sign-in failed");
         }
@@ -43,11 +45,14 @@ export default function Login({ onAuth }) {
       const errorMessage = res?.detail?.message || res?.detail || res?.error || "Auth failed";
       if (res && res.access_token) {
         localStorage.setItem("access_token", res.access_token);
-        onAuth({
-          id: res.user?.id || res.user?.email,
-          email: res.user?.email || payload.email,
-          name: res.user?.name || payload.name || payload.email.split("@", 1)[0],
-        });
+        if (onAuth) {
+          onAuth({
+            id: res.user?.id || res.user?.email,
+            email: res.user?.email || payload.email,
+            name: res.user?.name || payload.name || payload.email.split("@", 1)[0],
+          });
+        }
+        navigate("/app");
       } else {
         alert(errorMessage);
       }

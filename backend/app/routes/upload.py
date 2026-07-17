@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
@@ -75,12 +76,19 @@ async def upload(request: Request, file: UploadFile = File(...)):
         handle.write(content)
 
     try:
-        text = extract_text(file_path)
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(content)
+            temp_path = tmp.name
+
+        text = extract_text(temp_path)
         chunks = chunk_text(text)
         embeddings = create_embeddings(chunks)
         store_chunks(chunks, embeddings, f"{user_id}/{safe_name}")
     except Exception as exc:
         print(f"Document indexing failed, but upload was saved: {exc}")
+    finally:
+        if "temp_path" in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
 
     return {
         "message": "uploaded",
