@@ -1,9 +1,10 @@
 import datetime
-from fastapi import APIRouter, HTTPException, Request
 from urllib.parse import urlencode
-from pydantic import BaseModel
+
 import jwt
 import requests
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
 from app.config import settings
 
@@ -17,11 +18,13 @@ SUPABASE_URL = settings.supabase_url
 SUPABASE_KEY = settings.supabase_key
 
 
-def supabase_request(path: str, json_body: dict | None = None, method: str = "GET"):
+def supabase_request(path: str, json_body: dict | None = None, method: str = "GET", token: str | None = None):
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(status_code=500, detail="Supabase credentials not configured")
 
-    headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
+    headers = {"apikey": SUPABASE_KEY}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     if json_body is not None:
         headers["Content-Type"] = "application/json"
 
@@ -65,18 +68,25 @@ def create_access_token(data: dict):
 
 
 def decode_token(token: str):
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
-        return payload
-    except jwt.PyJWTError:
+    if not token:
         return None
+
+    try:
+        return supabase_request("user", token=token, method="GET")
+    except HTTPException as exc:
+        if exc.status_code in {401, 403}:
+            try:
+                return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
+            except jwt.PyJWTError:
+                return None
+        raise
 
 
 @router.post("/auth/signup")
 def signup(payload: SignupPayload):
     data = supabase_request(
         "signup",
-        {
+        json_body={
             "email": payload.email,
             "password": payload.password,
             "data": {"name": payload.name or payload.email.split("@", 1)[0]},
@@ -90,7 +100,7 @@ def signup(payload: SignupPayload):
 def login(payload: LoginPayload):
     data = supabase_request(
         "token?grant_type=password",
-        {
+        json_body={
             "email": payload.email,
             "password": payload.password,
         },
@@ -108,7 +118,8 @@ def me(request: Request):
     payload = decode_token(token)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
-    return {"id": payload.get("sub"), "email": payload.get("email"), "name": payload.get("name")}
+    user_payload = payload.get("user") if isinstance(payload, dict) and "user" in payload else payload
+    return {"id": user_payload.get("id") or user_payload.get("sub"), "email": user_payload.get("email"), "name": user_payload.get("name")}
 
 
 @router.get("/auth/google")
@@ -154,10 +165,8 @@ def google_callback(code: str | None = None):
         raise HTTPException(status_code=400, detail="Token exchange failed")
 
     token_data = token_resp.json()
-    id_token = token_data.get("id_token")
     access_token = token_data.get("access_token")
 
-    # Get user info
     userinfo_resp = requests.get(
         "https://www.googleapis.com/oauth2/v3/userinfo",
         headers={"Authorization": f"Bearer {access_token}"},

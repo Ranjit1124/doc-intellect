@@ -28,7 +28,11 @@ def get_current_user(request: Request):
     payload = decode_token(token)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
-    return payload.get("sub") or payload.get("email")
+
+    if isinstance(payload, dict) and "user" in payload:
+        payload = payload["user"]
+
+    return payload
 
 
 def clear_uploads(user_id: str):
@@ -52,8 +56,9 @@ def chunk_text(text, chunk_size=500):
 
 @router.post("/upload")
 async def upload(request: Request, file: UploadFile = File(...)):
-    user_id = get_current_user(request)
-    user_dir = get_user_upload_dir(user_id)
+    payload = get_current_user(request)
+    user_id = payload.get("id") or payload.get("sub") or payload.get("email")
+    user_dir = get_user_upload_dir(str(user_id))
 
     original_name = os.path.basename(file.filename or "upload.pdf")
     safe_name = original_name
@@ -86,17 +91,20 @@ async def upload(request: Request, file: UploadFile = File(...)):
 
 @router.get("/files")
 def get_files(request: Request):
-    user_id = get_current_user(request)
-    user_dir = get_user_upload_dir(user_id)
+    payload = get_current_user(request)
+    user_id = payload.get("id") or payload.get("sub") or payload.get("email")
+    user_dir = get_user_upload_dir(str(user_id))
     if not os.path.exists(user_dir):
         return []
+
     return os.listdir(user_dir)
 
 
 @router.delete("/files/{filename}")
 def delete_file(request: Request, filename: str):
-    user_id = get_current_user(request)
-    user_dir = get_user_upload_dir(user_id)
+    payload = get_current_user(request)
+    user_id = payload.get("id") or payload.get("sub") or payload.get("email")
+    user_dir = get_user_upload_dir(str(user_id))
     path = os.path.join(user_dir, filename)
 
     if not os.path.exists(path):
