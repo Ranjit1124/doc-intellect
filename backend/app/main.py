@@ -29,3 +29,7 @@ if os.path.exists("static"):
     @app.get("/oauth2callback")
     async def serve_oauth_callback():
         return FileResponse("static/index.html")
+
+    @app.get("/{full_path:path}")
+    async def catch_all(full_path: str):
+        return FileResponse("static/index.html")
