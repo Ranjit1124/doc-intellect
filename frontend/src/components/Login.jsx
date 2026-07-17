@@ -1,11 +1,39 @@
-import { useState } from "react";
-import { login, signup } from "../api/api";
+import { useEffect, useState } from "react";
+import { googleCallback, login, signup } from "../api/api";
 
 export default function Login({ onAuth }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isSignup, setIsSignup] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return;
+
+    const finishGoogleLogin = async () => {
+      try {
+        setLoading(true);
+        const res = await googleCallback(code);
+        if (res?.access_token) {
+          localStorage.setItem("access_token", res.access_token);
+          onAuth(res.user);
+          window.history.replaceState({}, "", "/");
+        } else {
+          alert(res?.detail || "Google sign-in failed");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Google sign-in failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    finishGoogleLogin();
+  }, [onAuth]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,25 +69,39 @@ export default function Login({ onAuth }) {
 
   return (
     <div className="login-screen">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <h2>{isSignup ? "Sign up" : "Sign in"}</h2>
-        {isSignup && (
-          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        )}
-        <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">{isSignup ? "Create account" : "Sign in"}</button>
-        <button type="button" onClick={() => setIsSignup(!isSignup)}>
-          {isSignup ? "Have an account? Sign in" : "New here? Create account"}
-        </button>
-        <hr />
-        <button type="button" onClick={handleGoogle}>Sign in with Google</button>
-      </form>
+      <div className="login-card">
+        <div className="login-brand">
+          <div className="login-brand-icon">DI</div>
+          <div>
+            <h1>Doc Intellect</h1>
+            <p>Secure access to your workspace</p>
+          </div>
+        </div>
+
+        <form className="login-form" onSubmit={handleSubmit}>
+          <h2>{isSignup ? "Create your account" : "Welcome back"}</h2>
+          {isSignup && (
+            <input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
+          )}
+          <input placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button className="btn btn-primary" type="submit" disabled={loading}>
+            {loading ? "Please wait..." : isSignup ? "Create account" : "Sign in"}
+          </button>
+          <button className="btn btn-ghost" type="button" onClick={() => setIsSignup(!isSignup)}>
+            {isSignup ? "Already have an account? Sign in" : "New here? Create an account"}
+          </button>
+          <div className="login-divider">or</div>
+          <button className="btn btn-accent" type="button" onClick={handleGoogle} disabled={loading}>
+            Continue with Google
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

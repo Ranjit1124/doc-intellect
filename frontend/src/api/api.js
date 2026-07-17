@@ -58,3 +58,6 @@ export const me = () => {
     headers: { Authorization: `Bearer ${token}` },
   }).then((r) => r.json());
 };
+
+export const googleCallback = (code) =>
+  fetch(`${BASE}/auth/google/callback?code=${encodeURIComponent(code)}`).then((r) => r.json());
