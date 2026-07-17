@@ -2,7 +2,7 @@ import datetime
 from fastapi import APIRouter, HTTPException, Request
 from urllib.parse import urlencode
 from pydantic import BaseModel
-from jose import jwt, JWTError
+import jwt
 import requests
 
 from app.config import settings
@@ -68,7 +68,7 @@ def decode_token(token: str):
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 

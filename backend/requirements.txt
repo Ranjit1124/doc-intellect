@@ -7,5 +7,5 @@ python-multipart
 ollama
 pinecone
 passlib[bcrypt]
-python-jose[cryptography]
+PyJWT
 requests
